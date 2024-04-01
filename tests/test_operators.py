@@ -2,7 +2,9 @@ from typing import Callable, List, Tuple
 
 import pytest
 from hypothesis import given
-from hypothesis.strategies import lists
+from hypothesis.strategies import lists,floats
+from math import isclose, exp
+import numpy as np
 
 from minitorch import MathTest
 from minitorch.operators import (
@@ -97,26 +99,27 @@ def test_eq(a: float) -> None:
 # that ensure that your operators obey basic
 # mathematical rules.
 
+small_floats = floats(min_value=-100, max_value=100)
 
 @pytest.mark.task0_2
 @given(small_floats)
 def test_sigmoid(a: float) -> None:
-    """Check properties of the sigmoid function, specifically
-    * It is always between 0.0 and 1.0.
-    * one minus sigmoid is the same as sigmoid of the negative
-    * It crosses 0 at 0.5
-    * It is  strictly increasing.
-    """
-    # TODO: Implement for Task 0.2.
-    raise NotImplementedError("Need to implement for Task 0.2")
+    y = sigmoid(a)
+    assert y >= 0
+    assert y <= 1
+    assert_close(1 - y, sigmoid(-a))
+    assert sigmoid(0) == 0.5
+    assert y <= sigmoid(a + 1e-2)  # strictly increasing
+    assert_close(y, 1 / (1 + np.exp(-a)))
+
 
 
 @pytest.mark.task0_2
 @given(small_floats, small_floats, small_floats)
 def test_transitive(a: float, b: float, c: float) -> None:
     "Test the transitive property of less-than (a < b and b < c implies a < c)"
-    # TODO: Implement for Task 0.2.
-    raise NotImplementedError("Need to implement for Task 0.2")
+    if lt(a, b) and lt(b, c):
+        assert lt(a, c)
 
 
 @pytest.mark.task0_2
@@ -125,8 +128,18 @@ def test_symmetric() -> None:
     Write a test that ensures that :func:`minitorch.operators.mul` is symmetric, i.e.
     gives the same value regardless of the order of its input.
     """
-    # TODO: Implement for Task 0.2.
-    raise NotImplementedError("Need to implement for Task 0.2")
+    # Define input values
+    x = 3.0
+    y = 4.0
+    
+    # Calculate mul(x, y)
+    result1 = mul(x, y)
+    
+    # Calculate mul(y, x)
+    result2 = mul(y, x)
+    
+    # Check if results are equal
+    assert result1 == result2
 
 
 @pytest.mark.task0_2
@@ -135,17 +148,24 @@ def test_distribute() -> None:
     Write a test that ensures that your operators distribute, i.e.
     :math:`z \times (x + y) = z \times x + z \times y`
     """
-    # TODO: Implement for Task 0.2.
-    raise NotImplementedError("Need to implement for Task 0.2")
+    x = 3.0
+    y = 4.0
+    z = 5.0
+    
+    # Calculate z * (x + y)
+    result1 = mul(z, add(x, y))
+    
+    # Calculate z * x + z * y
+    result2 = add(mul(z, x), mul(z, y))
+    
+    # Check if results are equal
+    assert result1 == result2
 
 
 @pytest.mark.task0_2
 def test_other() -> None:
-    """
-    Write a test that ensures some other property holds for your functions.
-    """
-    # TODO: Implement for Task 0.2.
-    raise NotImplementedError("Need to implement for Task 0.2")
+
+    assert neg(neg(3)) == 3
 
 
 # ## Task 0.3  - Higher-order functions
@@ -173,8 +193,12 @@ def test_sum_distribute(ls1: List[float], ls2: List[float]) -> None:
     Write a test that ensures that the sum of `ls1` plus the sum of `ls2`
     is the same as the sum of each element of `ls1` plus each element of `ls2`.
     """
-    # TODO: Implement for Task 0.3.
-    raise NotImplementedError("Need to implement for Task 0.3")
+    # Calculate the sum of ls1 and ls2
+    sum_ls1 = sum(ls1) + sum(ls2)
+    sum_ls2 = sum([x + y for x, y in zip(ls1, ls2)])
+    
+    # Check if the sums are equal
+    assert pytest.approx(sum_ls1)==pytest.approx(sum_ls2)
 
 
 @pytest.mark.task0_3

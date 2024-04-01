@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any, Dict, Optional, Sequence, Tuple
+import torch.nn as nn
 
 
 class Module:
@@ -32,12 +33,18 @@ class Module:
     def train(self) -> None:
         "Set the mode of this module and all descendent modules to `train`."
         # TODO: Implement for Task 0.4.
-        raise NotImplementedError("Need to implement for Task 0.4")
+        super(Module, self).train()  # Set the mode of this module to train
+        # Set the mode of all descendant modules to train
+        for module in self.children():
+            module.train()
 
     def eval(self) -> None:
         "Set the mode of this module and all descendent modules to `eval`."
         # TODO: Implement for Task 0.4.
-        raise NotImplementedError("Need to implement for Task 0.4")
+        super(Module, self).eval()  # Set the mode of this module to eval
+        # Set the mode of all descendant modules to eval
+        for module in self.children():
+            module.eval()
 
     def named_parameters(self) -> Sequence[Tuple[str, Parameter]]:
         """
@@ -47,13 +54,21 @@ class Module:
         Returns:
             The name and `Parameter` of each ancestor parameter.
         """
-        # TODO: Implement for Task 0.4.
-        raise NotImplementedError("Need to implement for Task 0.4")
+        params = []  # List to store parameters and their names
+        # Recursively collect parameters and their names
+        for name, param in self._named_members(prefix=self._full_name):
+            if isinstance(param, nn.Parameter):
+                params.append((name, param))
+        return params
 
     def parameters(self) -> Sequence[Parameter]:
         "Enumerate over all the parameters of this module and its descendents."
-        # TODO: Implement for Task 0.4.
-        raise NotImplementedError("Need to implement for Task 0.4")
+        params = []  # List to store parameters
+        # Recursively collect parameters
+        for name, param in self._named_members(prefix=self._full_name):
+            if isinstance(param, nn.Parameter):
+                params.append(param)
+        return params
 
     def add_parameter(self, k: str, v: Any) -> Parameter:
         """
