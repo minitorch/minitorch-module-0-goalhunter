@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from typing import Any, Dict, Optional, Sequence, Tuple
-import torch.nn as nn
 
 
 class Module:
@@ -32,19 +31,15 @@ class Module:
 
     def train(self) -> None:
         "Set the mode of this module and all descendent modules to `train`."
-        # TODO: Implement for Task 0.4.
-        super(Module, self).train()  # Set the mode of this module to train
-        # Set the mode of all descendant modules to train
-        for module in self.children():
-            module.train()
+        self.training = True
+        for m in self.modules():
+            m.training = True
 
     def eval(self) -> None:
         "Set the mode of this module and all descendent modules to `eval`."
-        # TODO: Implement for Task 0.4.
-        super(Module, self).eval()  # Set the mode of this module to eval
-        # Set the mode of all descendant modules to eval
-        for module in self.children():
-            module.eval()
+        self.training = False
+        for m in self.modules():
+            m.training = False
 
     def named_parameters(self) -> Sequence[Tuple[str, Parameter]]:
         """
@@ -54,20 +49,24 @@ class Module:
         Returns:
             The name and `Parameter` of each ancestor parameter.
         """
-        params = []  # List to store parameters and their names
-        # Recursively collect parameters and their names
-        for name, param in self._named_members(prefix=self._full_name):
-            if isinstance(param, nn.Parameter):
-                params.append((name, param))
+        params = [(param_name, param) for param_name, param in self._parameters.items()]
+
+        for module_name, module in self._modules.items():
+            module_named_params = module.named_parameters()
+            module_named_params_prefix = [
+                (f"{module_name}.{param_name}", param) for param_name, param in module_named_params
+            ]
+            params.extend(module_named_params_prefix)
+
         return params
 
     def parameters(self) -> Sequence[Parameter]:
         "Enumerate over all the parameters of this module and its descendents."
-        params = []  # List to store parameters
-        # Recursively collect parameters
-        for name, param in self._named_members(prefix=self._full_name):
-            if isinstance(param, nn.Parameter):
-                params.append(param)
+        params = [p for p in self._parameters.values()]
+
+        for module in self._modules.values():
+            params.extend(module.parameters())
+
         return params
 
     def add_parameter(self, k: str, v: Any) -> Parameter:
